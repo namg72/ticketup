@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 200">
+  <!-- Degradados -->
+  <defs>
+    <!-- Fondo del ticket -->
+    <linearGradient id="ticketGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+
+    <!-- Texto -->
+    <linearGradient id="textGradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cuerpo del ticket -->
+  <rect x="20" y="40" width="300" height="120" rx="25" ry="25" fill="url(#ticketGradient)" />
+
+  <!-- Muescas tipo ticket -->
+  <circle cx="20" cy="100" r="12" fill="white"/>
+  <circle cx="320" cy="100" r="12" fill="white"/>
+
+  <!-- Flecha ascendente -->
+  <path d="M110 130 L160 80 L210 130" stroke="black" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Texto TicketUp -->
+  <text x="360" y="120" font-size="56" font-family="Poppins, Arial, sans-serif" font-weight="700" fill="url(#textGradient)">
+    Ticket<tspan fill="#06b6d4">Up</tspan>
+  </text>
+</svg>
