@@ -1,59 +1,256 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TicketUp – Sistema Interno de Gestión de Gastos
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+TicketUp es una aplicación desarrollada con **Laravel 11**, **Vue 3**, **Docker Sail** y **Spatie Permissions**, diseñada para gestionar tickets internos creados por empleados, revisados por supervisores y validados por administradores.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📦 Requisitos
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Antes de comenzar, asegúrate de tener instalados:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+-   **Docker**
+-   **Docker Compose**
+-   **Git**
+-   **Node.js 18+**
+-   **npm** o **yarn**
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🚀 Instalación del Proyecto
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Clonar el repositorio:
 
-## Laravel Sponsors
+```bash
+git clone https://github.com/tu-repo/ticketup.git
+cd ticketup
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Instalar dependencias de backend:
 
-### Premium Partners
+```bash
+composer install
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Instalar dependencias de frontend:
 
-## Contributing
+```bash
+npm install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 🐳 Levantar el Entorno con Docker (Laravel Sail)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Si Sail no está disponible, crea el alias:
 
-## Security Vulnerabilities
+```bash
+alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Levantar los contenedores:
 
-## License
+```bash
+sail up -d
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Esto inicia:
+
+-   PHP-FPM
+-   MySQL
+-   Redis (si está configurado)
+-   Nginx
+
+---
+
+## ⚙️ Configuración del Entorno
+
+Copiar archivo de entorno:
+
+```bash
+cp .env.example .env
+```
+
+Generar key de la aplicación:
+
+```bash
+sail artisan key:generate
+```
+
+---
+
+## 🗄 Migraciones y Seeders
+
+Ejecutar migraciones:
+
+```bash
+sail artisan migrate
+```
+
+Ejecutar seeders (roles, permisos, admin inicial):
+
+```bash
+sail artisan db:seed
+```
+
+---
+
+## 🔐 Configuración de Spatie Permissions
+
+Instalar (si es necesario):
+
+```bash
+sail composer require spatie/laravel-permission
+```
+
+Publicar:
+
+```bash
+sail artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+```
+
+---
+
+## 🖼 Habilitar almacenamiento de archivos (Imágenes de tickets)
+
+```bash
+sail artisan storage:link
+```
+
+Esto permite que las imágenes se sirvan desde:
+
+```
+/public/storage
+```
+
+Los archivos se guardarán en:
+
+```
+storage/app/public/tickets/{timestamp-único}
+```
+
+Cada ticket almacena una `uri` con la ruta.
+
+---
+
+## 🧩 Compilación del Frontend (Vue 3 + Vite)
+
+Modo desarrollo:
+
+```bash
+npm run dev
+```
+
+Build de producción:
+
+```bash
+npm run build
+```
+
+---
+
+## ▶️ Acceso a la Aplicación
+
+```bash
+http://localhost
+```
+
+o si usas un puerto diferente:
+
+```bash
+http://localhost:8080
+```
+
+---
+
+## 🛠 Comandos Útiles
+
+### Ver logs
+
+```bash
+sail logs -f
+```
+
+### Ejecutar comandos dentro del contenedor
+
+```bash
+sail artisan <comando>
+```
+
+### Entrar al contenedor
+
+```bash
+sail shell
+```
+
+### Reiniciar contenedores
+
+```bash
+sail down
+sail up -d
+```
+
+---
+
+## ✔ Estructura General del Proyecto
+
+```
+app/
+bootstrap/
+config/
+database/
+ ├─ migrations/
+ ├─ seeders/
+public/
+resources/
+ ├─ js/ (Vue 3)
+ ├─ views/
+ ├─ images/
+routes/
+storage/
+```
+
+---
+
+## 🔐 Roles Soportados
+
+### 👤 Empleado
+
+-   Crea tickets
+-   Sube imágenes
+-   Responde a solicitudes de corrección
+
+### 🧑‍🏫 Supervisor
+
+-   Revisa tickets de los empleados asignados
+-   Solicita correcciones
+-   Aprueba o rechaza tickets
+
+### 🧑‍💼 Administrador
+
+-   Tiene visibilidad total
+-   Puede modificar decisiones del supervisor
+-   Gestiona usuarios, roles y categorías
+
+---
+
+## 📤 Flujo de Subida y Aprobación de Tickets
+
+1. El empleado crea un ticket y sube imágenes.
+2. El sistema crea un **URI único** para los archivos.
+3. El supervisor revisa:
+    - Puede solicitar correcciones
+    - Puede aprobar
+    - Puede rechazar
+4. El administrador puede cambiar el estado final si es necesario.
+
+---
+
+## 🧪 Tests
+
+Ejecutar tests:
+
+```bash
+sail artisan test
+```
+
+© 2025 TicketUp
