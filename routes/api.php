@@ -9,9 +9,10 @@ Route::post('/login', [ApiAuthController::class, 'login']);
 
 
 Route::middleware('auth:sanctum')->get('/tickets', [ApiTicketController::class, 'index']);
-Route::middleware('auth:sanctum')->post('/tickets/create', [ApiTicketController::class, 'store']);
-Route::middleware('auth:sanctum')->put('/tickets/update/{id}', [ApiTicketController::class, 'update']);
-Route::middleware('auth:sanctum')->delete('/tickets/delete/{id}', [ApiTicketController::class, 'destroy']);
+Route::middleware('auth:sanctum')->post('/ticket/create', [ApiTicketController::class, 'store']);
+Route::middleware('auth:sanctum')->put('/ticket/update/{id}', [ApiTicketController::class, 'update']);
+Route::middleware('auth:sanctum')->delete('/ticket/delete/{id}', [ApiTicketController::class, 'destroy']);
+Route::middleware('auth:sanctum')->post('/ticket/status/{id}', [ApiTicketController::class, 'ticketStatus']);
 
 
 

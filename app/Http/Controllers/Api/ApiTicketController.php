@@ -3,9 +3,11 @@
 
 namespace App\Http\Controllers\Api;
 
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TicketRequest;
 use App\Models\Ticket;
+use App\Models\TicketComment;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
@@ -262,5 +264,127 @@ class ApiTicketController extends Controller
                 'message' => 'Ha ocurrido un error al eliminar el gasto '
             ], 500);
         };
+    }
+
+    public function ticketStatus(Request $request, string $id)
+    {
+        $user = $request->user();
+
+        // Estados desde config
+        $statusPending  = config('constants.ticket_statuses.pending');
+        $statusApproved = config('constants.ticket_statuses.approved');
+        $statusRejected = config('constants.ticket_statuses.rejected');
+
+        // Solo supervisor o admin pueden cambiar el estado
+        if (! $user->hasAnyRole(['supervisor', 'admin'])) {
+            return response()->json([
+                'message' => 'No estás autorizado para cambiar el estado del ticket.',
+            ], 403);
+        }
+
+        // Buscar ticket
+        $ticket = Ticket::find($id);
+
+        if (! $ticket) {
+            return response()->json([
+                'message' => 'Ticket no encontrado.',
+            ], 404);
+        }
+
+        // Validar datos de entrada
+        $validated = $request->validate([
+            'action'  => 'required|string|in:approve,reject,request_revision',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $action  = $validated['action'];
+        $comment = $validated['comment'] ?? null;
+
+        // Si se pide "request_revision", obligamos a mandar comentario
+        if ($action === 'request_revision' && empty($comment)) {
+            return response()->json([
+                'message' => 'El comentario es obligatorio cuando se solicita revisión.',
+            ], 422);
+        }
+
+        // Supervisor NO puede tocarlo si ya está finalizado por admin
+        if ($user->hasRole('supervisor') && $ticket->finalized_by_admin) {
+            return response()->json([
+                'message' => 'Este ticket ya ha sido finalizado por un administrador.',
+            ], 403);
+        }
+
+        // LÓGICA DE CAMBIO SEGÚN ROL Y ACCIÓN
+        if ($user->hasRole('supervisor')) {
+
+            // SUPERVISOR
+            switch ($action) {
+                case 'request_revision':
+                    // Solo se puede pedir revisión si está pendiente
+                    if ($ticket->status !== $statusPending) {
+                        return response()->json([
+                            'message' => 'Solo se puede solicitar revisión cuando el ticket está pendiente.',
+                        ], 422);
+                    }
+
+                    $ticket->needs_revision      = true;
+                    // status se mantiene en "pending"
+                    // finalized_by_admin sigue false
+                    break;
+
+                case 'approve':
+                    $ticket->status             = $statusApproved;
+                    $ticket->needs_revision      = false;
+                    // finalized_by_admin sigue false (decisión de supervisor)
+                    break;
+
+                case 'reject':
+                    $ticket->status             = $statusRejected;
+                    $ticket->needs_revision      = false;
+                    // finalized_by_admin sigue false
+                    break;
+            }
+        } elseif ($user->hasRole('admin')) {
+
+            // ADMIN
+            switch ($action) {
+                case 'request_revision':
+                    // El admin puede reabrir y pedir revisión
+                    $ticket->status             = $statusPending;
+                    $ticket->needs_revision      = true;
+                    $ticket->finalized_by_admin = false;
+                    break;
+
+                case 'approve':
+                    $ticket->status             = $statusApproved;
+                    $ticket->needs_revision      = false;
+                    $ticket->finalized_by_admin = true; // decisión final de admin
+                    break;
+
+                case 'reject':
+                    // Incluye el caso: pending + needs_revision = true
+                    $ticket->status             = $statusRejected;
+                    $ticket->needs_revision      = false;
+                    $ticket->finalized_by_admin = true; // decisión final de admin
+                    break;
+            }
+        }
+
+        // Guardar cambios del ticket
+        $ticket->save();
+
+        // Si viene comentario, lo guardamos como TicketComment
+        if ($comment !== null && $comment !== '') {
+            TicketComment::create([
+                'ticket_id' => $ticket->id,
+                'user_id'   => $user->id,
+                'message'   => $comment,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Estado del ticket actualizado correctamente.',
+            'ticket'  => $ticket,
+        ], 200);
     }
 }
