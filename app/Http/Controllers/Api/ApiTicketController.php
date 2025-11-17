@@ -4,11 +4,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TicketRequest;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use PhpParser\Node\Stmt\TryCatch;
 
 class ApiTicketController extends Controller
 {
@@ -19,7 +20,7 @@ class ApiTicketController extends Controller
     {
         $query = Ticket::query();
 
-        $user = request()->user();
+        $user = $request->user();
 
         //Filtro por tipo de usuario para traernos los ticket de los empleados
         if ($user->hasRole('admin')) {
@@ -86,17 +87,68 @@ class ApiTicketController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        //
-    }
+    public function create() {}
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(TicketRequest $request)
     {
-        //
+
+
+        $user = $request->user();
+
+        if (!$user->hasRole('employee')) {
+            return response()->json([
+                'message' => "No está autorizado a subir un nuevo gasto"
+            ], 403);
+        }
+
+        $uploadFile = $request->file('image');
+
+        if (!$uploadFile) {
+            return response()->json([
+                'message' => 'Imagen de ticket requerida'
+            ], 422);
+        }
+
+        $extension = $uploadFile->getClientOriginalExtension();
+
+        $uri = $user->id . '-' . now()->format('YmdHis') . '.' . $extension;
+
+        $path = $uploadFile->storeAs(
+            'tickets',
+            $uri,
+            'public'
+        );
+
+        $tickets = [
+            'user_id' => $user->id,
+            'supervisor_id' => $user->supervisor_id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'category_id' => $request->category_id,
+            'uri' => $path,
+
+        ];
+        try {
+            $ticket = Ticket::create($tickets);
+        } catch (\Throwable $e) {
+
+            // si la inserción en BD falla, borramos la imagen que acabamos de subir
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+
+            return response()->json([
+                'message' => 'Error al guardar el ticket en la base de datos',
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Gasto subido correctamente',
+            'ticket' => $ticket
+        ], 201);
     }
 
     /**
@@ -118,9 +170,70 @@ class ApiTicketController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(TicketRequest $request, string $id)
     {
-        //
+
+
+        $ticket = Ticket::find($id);
+
+
+
+        $uploadFile = $request->file('image');
+
+        if (!$ticket) {
+            return response()->json([
+                'message' => 'Ticket no encontrado',
+            ], 404);
+        }
+
+        $uri = $ticket->uri;
+
+
+
+        if ($uploadFile !== null) {
+
+            if (Storage::disk('public')->exists($ticket->uri)) {
+                Storage::disk('public')->delete($ticket->uri);
+            }
+            $extension = $uploadFile->getClientOriginalExtension();
+            $uri = $ticket->user_id . '-' . now()->format('YmdHis') . '.' . $extension;
+
+            $path = $uploadFile->storeAs(
+                'tickets',
+                $uri,
+                'public'
+
+
+            );
+
+
+
+            $uri = $path;
+        }
+
+
+
+        try {
+
+            $ticket->fill([
+                'title' => $request->title,
+                'description' => $request->description,
+                'category_id' => $request->category_id,
+                'uri' => $uri,
+            ]);
+
+            $ticket->save();
+
+            return response()->json([
+                'message' => 'Gasto actualizado correctamente',
+                'ticket' => $ticket
+            ], 200);
+        } catch (\Throwable $th) {
+
+            return response()->json([
+                'message' => 'Error al actualizar el gasto',
+            ], 500);
+        }
     }
 
     /**
@@ -128,6 +241,26 @@ class ApiTicketController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $ticket = Ticket::find($id);
+
+        if (!$ticket) {
+            return response()->json([
+                'message' => 'El gasto que intenta borrar no existe '
+            ], 404);
+        }
+
+        try {
+            $ticket->delete();
+            if (Storage::disk('public')->exists($ticket->uri)) {
+                Storage::disk('public')->delete($ticket->uri);
+            }
+            return response()->json([
+                'message' => 'El gasto ha sido elmiinado '
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => 'Ha ocurrido un error al eliminar el gasto '
+            ], 500);
+        };
     }
 }

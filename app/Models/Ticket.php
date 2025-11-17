@@ -10,6 +10,8 @@ use App\Models\User;
 class Ticket extends Model
 {
     protected $fillable = [
+        'user_id',
+        'supervisor_id',
         'title',
         'description',
         'uri',

@@ -11,7 +11,21 @@ class TicketRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+
+        $user = $this->user();
+
+
+        // Crear ticket (POST): solo empleados
+        if ($this->isMethod('post')) {
+            return $user->hasRole('employee');
+        }
+
+        // Actualizar ticket (PUT/PATCH): empleado, supervisor o admin
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
+            return $user->hasAnyRole(['employee', 'supervisor', 'admin']);
+        }
+
+        return false;
     }
 
     /**
@@ -21,10 +35,14 @@ class TicketRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'title' => ['required', 'string'],
-            'description' => ['text'],
-            'category_id' => ['required', ''],
+            'description' => ['nullable', 'string'],
+            'category_id' => ['required', 'integer', 'exists:ticket_categories,id'],
+            'image' => ['required', 'file', 'mimes:jpg,png,pdf', 'max:2048']
         ];
+
+
+        return $rules;
     }
 }
