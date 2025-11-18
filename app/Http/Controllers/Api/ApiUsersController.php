@@ -56,7 +56,8 @@ class ApiUsersController extends Controller
         }
 
         // Ejecutar consulta
-        $users = $query->get();
+
+        $users = $query->orderBy('id', 'asc')->paginate(10);
 
         // Formatear respuesta
         $users = $users->map(function ($user) {

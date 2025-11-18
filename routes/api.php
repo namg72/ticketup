@@ -19,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/ticket/update/{id}', [ApiTicketController::class, 'update']);
     Route::delete('/ticket/delete/{id}', [ApiTicketController::class, 'destroy']);
     Route::post('/ticket/status/{id}', [ApiTicketController::class, 'ticketStatus']);
+    Route::get('/ticket/{id}/image', [ApiTicketController::class, 'image']);
 
     //user
     Route::get('/users', [ApiUsersController::class, 'index']);

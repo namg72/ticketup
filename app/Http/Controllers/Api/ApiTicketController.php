@@ -387,4 +387,46 @@ class ApiTicketController extends Controller
             'ticket'  => $ticket,
         ], 200);
     }
+
+    public function image(Request $request, string $id)
+    {
+        $user = $request->user();
+
+        $ticket = Ticket::find($id);
+
+        if (! $ticket) {
+            return response()->json([
+                'message' => 'Ticket no encontrado',
+            ], 404);
+        }
+
+        // 🔐 Permisos básicos:
+        // - employee: solo su propio ticket
+        if ($user->hasRole('employee') && $ticket->user_id !== $user->id) {
+            return response()->json([
+                'message' => 'No está autorizado para ver la imagen de este ticket',
+            ], 403);
+        }
+
+        // - supervisor: solo tickets de sus empleados
+        if ($user->hasRole('supervisor') && $ticket->supervisor_id !== $user->id) {
+            return response()->json([
+                'message' => 'No está autorizado para ver la imagen de este ticket',
+            ], 403);
+        }
+
+        // - admin: puede verlo todo (no hacemos check extra)
+
+        // Ruta física del archivo en storage/app/public/...
+        $path = Storage::disk('public')->path($ticket->uri);
+
+        if (! file_exists($path)) {
+            return response()->json([
+                'message' => 'Imagen no encontrada en el servidor',
+            ], 404);
+        }
+
+        // ⬅️ Aquí el cambio: devolvemos el fichero directamente
+        return response()->file($path);
+    }
 }
