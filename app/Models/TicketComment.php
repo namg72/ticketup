@@ -11,7 +11,9 @@ class TicketComment extends Model
     protected $fillable = [
         'message',
         'ticket_id',
-        'user_id'
+        'user_id',
+        'deleted_at',
+        'deleted_by'
     ];
 
     public function user()
