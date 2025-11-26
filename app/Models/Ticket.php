@@ -16,6 +16,9 @@ class Ticket extends Model
         'description',
         'uri',
         'category_id',
+        'amount',
+        'iva_amount',
+        'total_amount'
 
     ];
 
@@ -25,6 +28,9 @@ class Ticket extends Model
     protected $casts = [
         'needs_revision' => 'boolean',
         'finalized_by_admin' => 'boolean',
+        'amount'              => 'decimal:2',
+        'iva_amount'          => 'decimal:2',
+        'total_amount'        => 'decimal:2',
     ];
 
     public function user()

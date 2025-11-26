@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Ticket;
 
 
 use App\Http\Controllers\Controller;
@@ -124,6 +124,11 @@ class ApiTicketController extends Controller
             'public'
         );
 
+
+        $total = $request->total_amount;
+        $base = round($total / 1.21, 2);
+        $iva  = round($total - $base, 2);
+
         $tickets = [
             'user_id' => $user->id,
             'supervisor_id' => $user->supervisor_id,
@@ -131,6 +136,9 @@ class ApiTicketController extends Controller
             'description' => $request->description,
             'category_id' => $request->category_id,
             'uri' => $path,
+            'amount' => $base,
+            'iva_amount' => $iva,
+            'total_amount' => $total,
 
         ];
         try {
@@ -158,8 +166,24 @@ class ApiTicketController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $ticket = Ticket::with(['comments.user', 'user'])->findOrFail($id);
+
+
+
+        return response()->json([
+            'ticket' => [
+                'id'            => $ticket->id,
+                'user' => $ticket->user->name,
+                'title'          => $ticket->title,
+                'description'         => $ticket->description,
+                'supervisor_id' => $ticket->supervisor_id,
+                'status'     => $ticket->status,
+                'comments' => $ticket->comments
+            ]
+
+        ], 200);
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -184,7 +208,7 @@ class ApiTicketController extends Controller
 
         if (!$ticket) {
             return response()->json([
-                'message' => 'Ticket no encontrado',
+                'message' => 'Gasto no encontrado',
             ], 404);
         }
 
@@ -217,11 +241,18 @@ class ApiTicketController extends Controller
 
         try {
 
+            $total = $request->total_amount;
+            $base = round($total / 1.21, 2);
+            $iva  = round($total - $base, 2);
+
             $ticket->fill([
                 'title' => $request->title,
                 'description' => $request->description,
                 'category_id' => $request->category_id,
                 'uri' => $uri,
+                'total_amount' => $total,
+                'amount' => $base,
+                'iva_amount' => $iva,
             ]);
 
             $ticket->save();
@@ -428,5 +459,60 @@ class ApiTicketController extends Controller
 
         // ⬅️ Aquí el cambio: devolvemos el fichero directamente
         return response()->file($path);
+    }
+
+    public function commentsStore(Request $request, string $id)
+    {
+        // 1. Validar el mensaje
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:1000'],
+        ]);
+
+        // 2. Buscar el ticket
+        $ticket = Ticket::find($id);
+
+        if (! $ticket) {
+            return response()->json([
+                'message' => 'Ticket no encontrado',
+            ], 404);
+        }
+
+        // 3. Usuario autenticado
+        $user = $request->user();
+
+        // 4. Comprobar permisos:
+        // - employee → solo sus tickets
+        // - supervisor → solo tickets de sus empleados
+        // - admin → pasa porque no entra en ninguna condición
+        if (
+            ($user->hasRole('employee') && $user->id !== $ticket->user_id) ||
+            ($user->hasRole('supervisor') && $user->id !== $ticket->supervisor_id)
+        ) {
+            return response()->json([
+                'message' => 'No tienes permiso para crear un comentario',
+            ], 403);
+        }
+
+        try {
+            // 5. Crear el comentario
+            $comment = TicketComment::create([
+                'ticket_id' => $ticket->id,
+                'user_id'   => $user->id,
+                'message'   => $validated['message'],
+            ]);
+
+            // 6. Recargar ticket con comentarios y usuario (si quieres devolverlo completo)
+            $ticket->load(['comments.user', 'user']);
+
+            return response()->json([
+                'message' => 'Comentario creado correctamente',
+                'comment' => $comment,
+            ], 201);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'message' => 'Ha ocurrido un error al intentar guardar el comentario',
+                'error'   => $th->getMessage(),
+            ], 500);
+        }
     }
 }

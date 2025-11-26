@@ -18,6 +18,9 @@ return new class extends Migration
             $table->unsignedBigInteger('category_id');
             $table->string('title');
             $table->text('description')->nullable();
+            $table->decimal('amount', 6, 2);
+            $table->decimal('iva_amount', 6, 2);
+            $table->decimal('total_amount', 10, 2);
             $table->string('uri')->nullable();
             $table->string('status')->default('pending');
             $table->boolean('needs_revision')->default(false);

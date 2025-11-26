@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Users;
+namespace App\Http\Requests\Users\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Monolog\Handler\IFTTTHandler;

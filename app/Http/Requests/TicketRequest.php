@@ -39,7 +39,14 @@ class TicketRequest extends FormRequest
             'title' => ['required', 'string'],
             'description' => ['nullable', 'string'],
             'category_id' => ['required', 'integer', 'exists:ticket_categories,id'],
-            'image' => ['required', 'file', 'mimes:jpg,png,pdf', 'max:2048']
+            'image' => ['required', 'file', 'mimes:jpg,png,pdf', 'max:2048'],
+            'total_amount' => [
+                'required',
+                'numeric',
+                'decimal:0,2',
+                'min:0.01',
+                'max:9999.99'
+            ],
         ];
 
 

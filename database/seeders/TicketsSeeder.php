@@ -32,13 +32,21 @@ class TicketsSeeder extends Seeder
             // Obtenemos el supervisor del empleado
             $supervisorId = $employee->supervisor_id;
 
+            $amount = fake()->randomFloat(2, 5, 600); // entre 5 y 600 €
+            $iva    = round($amount * 0.21, 2);
+            $total_amount  = $amount + $iva;
+
+
             Ticket::create([
                 'user_id' => $employee->id,
                 'supervisor_id' => $supervisorId,
                 'category_id' => $categories->random()->id,
                 'title' => fake()->sentence(3),
                 'description' => fake()->text(100),
-                'uri' => null, // de momento no lo usamos
+                'amount' => $amount,
+                'iva_amount'   => $iva,
+                'total_amount'  => $total_amount,
+                'uri' => null,
                 'status' => $statuses[array_rand($statuses)],
                 'needs_revision' => fake()->boolean(20),       // 20% de tickets necesitan revisión
                 'finalized_by_admin' => fake()->boolean(10),  // 10% finalizados por admin
