@@ -170,9 +170,18 @@ class ApiTicketCommentTicketCommentyController extends Controller
         }
 
 
+
+        $data = $request->validate([
+            'message' => [
+                'required',
+                'string',
+                'max:1000',
+
+            ],
+        ]);
         if ($canUpdate) {
 
-            $comment->update(['message' => $request->message, 'updated_at' => now()]);
+            $comment->update(['message' => $data['message']]);
 
             return response()->json([
                 'message' => 'Comentario editado correctamente',
