@@ -218,7 +218,7 @@ class ApiTicketController extends Controller
 
         if ($uploadFile !== null) {
 
-            if (Storage::disk('public')->exists($ticket->uri)) {
+            if (!empty($ticket->uri) &&  Storage::disk('public')->exists($ticket->uri)) {
                 Storage::disk('public')->delete($ticket->uri);
             }
             $extension = $uploadFile->getClientOriginalExtension();

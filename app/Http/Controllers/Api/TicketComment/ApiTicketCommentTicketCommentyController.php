@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\TicketComment;
+namespace App\Http\Api\Controllers\TicketComment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;

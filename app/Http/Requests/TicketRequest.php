@@ -33,22 +33,33 @@ class TicketRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
+
     public function rules(): array
     {
         $rules = [
             'title' => ['required', 'string'],
             'description' => ['nullable', 'string'],
             'category_id' => ['required', 'integer', 'exists:ticket_categories,id'],
-            'image' => ['required', 'file', 'mimes:jpg,png,pdf', 'max:2048'],
             'total_amount' => [
                 'required',
                 'numeric',
                 'decimal:0,2',
                 'min:0.01',
-                'max:9999.99'
+                'max:9999.99',
             ],
         ];
 
+        // CREATE (POST /tickets) → imagen obligatoria
+        if ($this->isMethod('post')) {
+            $rules['image'] = ['required', 'file', 'mimes:jpg,png,pdf', 'max:2048'];
+        }
+
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
+            // Only add validation if a file is actually being uploaded
+            if ($this->hasFile('image')) {
+                $rules['image'] = ['file', 'mimes:jpg,png,pdf', 'max:2048'];
+            }
+        }
 
         return $rules;
     }
