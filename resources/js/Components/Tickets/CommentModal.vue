@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import { ElMessage } from "element-plus";
 
 const props = defineProps<{
     ticketId: number;
@@ -32,6 +33,14 @@ const submit = () => {
             onSuccess: () => {
                 form.reset("message");
                 emit("close");
+
+                ElMessage({
+                    type: "success",
+                    message: "Comentario creado correctamente.",
+                });
+            },
+            onError: () => {
+                ElMessage.error("Error al crear el comentario.");
             },
         });
     }
@@ -46,6 +55,13 @@ const submit = () => {
                 onSuccess: () => {
                     form.reset("message");
                     emit("close");
+                    ElMessage({
+                        type: "success",
+                        message: "Comentario actualizado correctamente.",
+                    });
+                },
+                onError: () => {
+                    ElMessage.error("Error al actualizar comentario.");
                 },
             }
         );

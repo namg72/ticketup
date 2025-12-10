@@ -267,4 +267,12 @@ class TicketController extends Controller
             ->route('tickets.edit', $ticket)
             ->with('success', 'Comentario acutalizado correctamente.');
     }
+
+    public function destroyComment(Ticket $ticket, TicketComment $comment, Request $request)
+    {
+
+        $this->authorize('deleteComment', [$ticket, $comment]);
+
+        $comment->delete();
+    }
 }

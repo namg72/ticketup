@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { useForm } from "@inertiajs/vue3";
+import { useForm, router } from "@inertiajs/vue3";
 import FormTicket from "@/Components/Tickets/FormTicket.vue";
 import { formatDate } from "@/Helpers/dateFormatter";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@element-plus/icons-vue";
 import { ref } from "vue";
 import CommentModal from "@/Components/Tickets/CommentModal.vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 const props = defineProps<{
     ticket: {
         id: number;
@@ -69,8 +70,53 @@ const openEdit = (comment: any) => {
     activeCommentMessage.value = comment.message;
     showCommentModal.value = true;
 };
-const delteCommenet = (id: number) => {
-    console.log("delte", id);
+const delteCommenet = (commentId: number) => {
+    // 1. Mostrar un cuadro de confirmación (Buena Práctica)
+    ElMessageBox.confirm(
+        "¿Estás seguro de que quieres eliminar este comentario?",
+        "Advertencia",
+        {
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar",
+            type: "warning",
+        }
+    )
+        .then(() => {
+            // 2. Ejecutar la solicitud DELETE
+            router.delete(
+                route("tickets.comments.destroy", {
+                    ticket: props.ticket.id,
+                    comment: commentId,
+                }),
+                {
+                    // Opciones de Inertia (opcional)
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        ElMessage({
+                            type: "success",
+                            message: "Comentario eliminado correctamente.",
+                        });
+                    },
+                    onError: () => {
+                        ElMessage.error("Error al eliminar el comentario.");
+                    },
+                }
+            );
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+};
+
+//habiliamos el borrado con un tiempo maximo de 15 minutos tras la creación del comentario
+const isDeletable = (commentCreated_at: string) => {
+    const commentDate = new Date(commentCreated_at);
+
+    const now = new Date();
+
+    const limitTimeMs = now.getTime() - 15 * 60 * 1000; // 15 minutos
+
+    return commentDate.getTime() >= limitTimeMs;
 };
 </script>
 
@@ -133,6 +179,11 @@ const delteCommenet = (id: number) => {
                                             />
 
                                             <el-button
+                                                v-if="
+                                                    isDeletable(
+                                                        comment.created_at
+                                                    )
+                                                "
                                                 size="small"
                                                 type="danger"
                                                 :icon="IconDelete"

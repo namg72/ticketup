@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, useForm } from "@inertiajs/vue3";
 import { formatDate } from "@/Helpers/dateFormatter";
-import type { UploadFile } from "element-plus";
+import { ElMessage, type UploadFile } from "element-plus";
 import { computed, watch } from "vue";
 import { normalizeAmount } from "@/Helpers/normalizeAmount";
 
@@ -54,7 +54,18 @@ const handleUploadFile = (uploadFile: UploadFile) => {
 const submit = () => {
     if (props.mode === "create") {
         // Crear: siempre envías image (es obligatoria)
-        form.post(route("tickets.store"));
+        form.post(route("tickets.store"), {
+            preserveScroll: true,
+            onSuccess: () => {
+                ElMessage({
+                    type: "success",
+                    message: "Ticket creado correctamente.",
+                });
+            },
+            onError: () => {
+                ElMessage.error("Error al crear el comentario.");
+            },
+        });
     } else {
         // Editar: si no hay imagen nueva, quitamos el campo antes de enviar
         form.transform((data) => {
@@ -65,6 +76,15 @@ const submit = () => {
             }
             return data;
         }).put(route("tickets.update", props.ticket!.id), {
+            onSuccess: () => {
+                ElMessage({
+                    type: "success",
+                    message: "Ticket actualizado correctamente.",
+                });
+            },
+            onError: () => {
+                ElMessage.error("Error al acutalizar el ticket.");
+            },
             onFinish: () => {
                 // volvemos a dejar el form "normal", sin transformaciones raras
                 form.transform((data) => data);

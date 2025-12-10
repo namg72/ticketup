@@ -55,6 +55,10 @@ Route::middleware('auth')->group(function () {
         ->name('tickets.comments.update');
 
 
+    Route::delete('/tickets/{ticket}/comment/{comment}/destroy', [TicketController::class, 'destroyComment'])
+        ->name('tickets.comments.destroy');
+
+
 
     // Ticket image
     Route::get('/tickets/{ticket}/image', [TicketImageController::class, 'show'])
