@@ -49,7 +49,6 @@ const handleUploadFile = (uploadFile: UploadFile) => {
     }
 
     form.image = uploadFile.raw as File;
-    console.log("Archivo subido", form);
 };
 
 const submit = () => {
@@ -126,7 +125,9 @@ const onTotalAmountInput = (value: string | number) => {
 
 <template>
     <!-- Formulario Element Plus -->
-
+    <div class="w-full">
+        <h2>Comentarios</h2>
+    </div>
     <el-form :model="form" label-position="top" @submit.prevent="submit">
         <template v-if="mode === 'edit'">
             <!-- Fecha craacion-->

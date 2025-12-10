@@ -46,7 +46,6 @@ const props = defineProps<{
     statusCounts: StatusCounts;
 }>();
 
-console.log(props.tickets);
 const showImageDialog = ref(false);
 const currentImageUrl = ref<string | null>(null);
 const currentDownloadUrl = ref<string | null>(null);

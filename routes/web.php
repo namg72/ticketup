@@ -48,6 +48,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/tickets/{ticket}', [TicketController::class, 'update'])
         ->name('tickets.update');
 
+    Route::post('/tickets/{ticket}/comment', [TicketController::class, 'createComment'])
+        ->name('tickets.comments.store');
+
+    Route::put('/tickets/{ticket}/comment/{comment}', [TicketController::class, 'updateComment'])
+        ->name('tickets.comments.update');
+
+
 
     // Ticket image
     Route::get('/tickets/{ticket}/image', [TicketImageController::class, 'show'])

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Ticket\CommentRequest;
 use App\Http\Requests\TicketRequest;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
+use App\Models\TicketComment;
 use App\Models\User;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -145,12 +148,15 @@ class TicketController extends Controller
         $user = $request->user();
 
         $role = $user->getRoleNames()->first();
-        $ticket->load('user', 'supervisor', 'category', 'comments');
+        $ticket->load('user', 'supervisor', 'category', 'comments.user');
         $categories = TicketCategory::all(['id', 'name']);
+
         return Inertia::render('Tickets/Edit', [
             'ticket' => $ticket,
             'categories' => $categories,
             'role' => $role,
+            'comments' => $ticket->comments,
+            'user' => $user,
         ]);
     }
 
@@ -225,5 +231,40 @@ class TicketController extends Controller
                 ->route('dashboard')
                 ->with('success', 'Ha ocurrido un error al actualizar el gasto');
         }
+    }
+
+    public function createComment(Ticket $ticket, CommentRequest $request)
+    {
+        $this->authorize('createComment', $ticket);
+
+        $user = $request->user();
+
+        $data = $request->validated();
+
+        TicketComment::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $user->id,
+            'message' => $data['message'],
+        ]);
+
+
+        return redirect()
+            ->route('tickets.edit', $ticket)
+            ->with('success', 'Comentario creado correctamente.');
+    }
+
+    public function updateComment(Ticket $ticket, TicketComment $comment, CommentRequest $request)
+    {
+        $this->authorize('editComment', [$ticket, $comment]);
+
+        $data = $request->validated(); // ['message' => '...']
+
+        $comment->update([
+            'message' => $data['message'],
+        ]);
+
+        return redirect()
+            ->route('tickets.edit', $ticket)
+            ->with('success', 'Comentario acutalizado correctamente.');
     }
 }
