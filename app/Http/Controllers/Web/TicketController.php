@@ -9,11 +9,11 @@ use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\TicketComment;
 use App\Models\User;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+
 
 class TicketController extends Controller
 {
@@ -274,5 +274,37 @@ class TicketController extends Controller
         $this->authorize('deleteComment', [$ticket, $comment]);
 
         $comment->delete();
+    }
+
+    // Aunque Inertia se usa más en la función 'render'
+
+    public function changeStatus(Ticket $ticket, Request $request)
+    {
+        // 1. Validar la entrada (El número de estado sigue viniendo en el Request Body)
+        $validated = $request->validate([
+            'status' => 'required|integer|between:1,4',
+        ]);
+
+        // 2. Mapeo de estados (La lógica de BD no cambia)
+        $statusMap = [
+            1 => 'pending',
+            2 => 'review',
+            3 => 'approved',
+            4 => 'rejected',
+        ];
+
+        $newStatus = $validated['status'];
+
+        if (isset($statusMap[$newStatus])) {
+            $ticket->status = $statusMap[$newStatus];
+            $ticket->save();
+        }
+
+
+        // Redireccionamos t.
+
+        return redirect()
+            ->route('dashboard')
+            ->with('success', 'Gasto subido correctamente');
     }
 }

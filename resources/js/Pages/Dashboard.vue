@@ -58,12 +58,12 @@ const openImageModal = (row: TicketRow) => {
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Panel" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Dashboard
+                Panel
             </h2>
         </template>
 

@@ -5,7 +5,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\TicketController;
 use App\Http\Controllers\Web\TicketImageController;
-
+use App\Http\Controllers\Web\Users\UsersController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -22,6 +22,12 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [TicketController::class, 'index'])
         ->name('dashboard');
+});
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/users', [UsersController::class, 'index'])
+        ->name('users');
 });
 
 Route::middleware('auth')->group(function () {
@@ -57,6 +63,9 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/tickets/{ticket}/comment/{comment}/destroy', [TicketController::class, 'destroyComment'])
         ->name('tickets.comments.destroy');
+
+    Route::put('/tickets/{ticket}/status', [TicketController::class, 'changeStatus'])
+        ->name('tickets.change.status');
 
 
 

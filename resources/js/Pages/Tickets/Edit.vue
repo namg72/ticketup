@@ -10,6 +10,7 @@ import {
 import { ref } from "vue";
 import CommentModal from "@/Components/Tickets/CommentModal.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Ticket } from "@/types/ticket";
 const props = defineProps<{
     ticket: {
         id: number;
@@ -24,6 +25,7 @@ const props = defineProps<{
         created_at: string;
         updated_at: string;
         uri: string;
+        status: string | number;
     };
     categories: {
         id: number;
@@ -51,6 +53,7 @@ const form = useForm({
     category: props.ticket.category!.name ?? null,
     supervisor: props.ticket.supervisor?.name,
     total_amount: props.ticket.total_amount ?? "",
+    status: props.ticket.status,
 });
 const showCommentModal = ref(false);
 const modalMode = ref<"create" | "update">("create");
@@ -118,6 +121,34 @@ const isDeletable = (commentCreated_at: string) => {
 
     return commentDate.getTime() >= limitTimeMs;
 };
+
+const isCommentAvailable = () => {
+    if (
+        props.ticket?.status === "approved" ||
+        props.ticket?.status === "rejected"
+    ) {
+        return false;
+    } else {
+        return true;
+    }
+};
+const handleStatus = (newStatus: number) => {
+    form.status = newStatus;
+    form.put(route("tickets.change.status", props.ticket.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset("status");
+
+            ElMessage({
+                type: "success",
+                message: "Estado acutalizado correctamente.",
+            });
+        },
+        onError: () => {
+            ElMessage.error("Error al actualizar el estado.");
+        },
+    });
+};
 </script>
 
 <template>
@@ -128,9 +159,54 @@ const isDeletable = (commentCreated_at: string) => {
             <div class="flex gap-x-16 items-stretch">
                 <!-- Columna edición (2/3) -->
                 <div class="basis-3/5">
-                    <h1 class="text-2xl font-bold mb-4">
-                        Editar ticket Nº {{ form.id }}
-                    </h1>
+                    <div
+                        class="flex justify-end mb-10"
+                        v-if="props.role !== 'employee'"
+                    >
+                        <div>
+                            <el-button type="warning" @click="handleStatus(2)">
+                                Revisar ticket
+                            </el-button>
+                            <el-button type="success" @click="handleStatus(3)">
+                                Aprobar ticket
+                            </el-button>
+                            <el-button type="danger" @click="handleStatus(4)">
+                                Rechazar ticket
+                            </el-button>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <h1 class="text-2xl font-bold mb-4">
+                            Editar ticket Nº {{ form.id }}
+                        </h1>
+                        <div class="ml-10">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 text-l font-semibold rounded-full text-white"
+                                :class="{
+                                    'bg-green-500':
+                                        ticket.status === 'approved',
+                                    'bg-red-500': ticket.status === 'rejected',
+                                    'bg-yellow-500': ticket.status === 'review',
+                                    'bg-violet-500':
+                                        ticket.status === 'pending',
+                                }"
+                            >
+                                <!-- Texto bonito del estado -->
+                                <span v-if="ticket.status === 'approved'"
+                                    >Aprobado</span
+                                >
+                                <span v-else-if="ticket.status === 'rejected'"
+                                    >Rechazado</span
+                                >
+                                <span v-else-if="ticket.status === 'review'"
+                                    >En revisión</span
+                                >
+                                <span v-else-if="ticket.status === 'pending'"
+                                    >Pendiente</span
+                                >
+                            </span>
+                        </div>
+                    </div>
                     <div class="h-full">
                         <FormTicket
                             :ticket="ticket"
@@ -176,6 +252,9 @@ const isDeletable = (commentCreated_at: string) => {
                                                 :icon="IconEdit"
                                                 circle
                                                 @click="openEdit(comment)"
+                                                :disabled="
+                                                    !isCommentAvailable()
+                                                "
                                             />
 
                                             <el-button
@@ -187,9 +266,11 @@ const isDeletable = (commentCreated_at: string) => {
                                                 size="small"
                                                 type="danger"
                                                 :icon="IconDelete"
-                                                circle
                                                 @click="
                                                     delteCommenet(comment.id)
+                                                "
+                                                :disabled="
+                                                    !isCommentAvailable()
                                                 "
                                             />
                                         </span>
@@ -205,6 +286,7 @@ const isDeletable = (commentCreated_at: string) => {
                             <el-button
                                 type="success"
                                 @click="showCommentModal = true"
+                                :disabled="!isCommentAvailable()"
                             >
                                 Crear comentario
                             </el-button>

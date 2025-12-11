@@ -35,7 +35,13 @@ const showingNavigationDropdown = ref(false);
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
                                 >
-                                    Dashboard
+                                    Panel
+                                </NavLink>
+                                <NavLink
+                                    :href="route('users')"
+                                    :active="route().current('users')"
+                                >
+                                    Gestión de usuarios
                                 </NavLink>
                             </div>
                         </div>
@@ -72,14 +78,14 @@ const showingNavigationDropdown = ref(false);
                                         <DropdownLink
                                             :href="route('profile.edit')"
                                         >
-                                            Profile
+                                            Perfil
                                         </DropdownLink>
                                         <DropdownLink
                                             :href="route('logout')"
                                             method="post"
                                             as="button"
                                         >
-                                            Log Out
+                                            Salir
                                         </DropdownLink>
                                     </template>
                                 </Dropdown>

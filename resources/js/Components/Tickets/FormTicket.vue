@@ -245,12 +245,24 @@ const onTotalAmountInput = (value: string | number) => {
             </el-upload>
         </el-form-item>
 
-        <div class="mt-6">
-            <el-button type="success" native-type="submit"> Enviar </el-button>
+        <div class="mt-6" v-if="props.role === 'employee'">
+            <el-button
+                type="success"
+                native-type="submit"
+                :disabled="form.hasErrors"
+            >
+                Enviar
+            </el-button>
 
             <span class="mr-6"></span>
             <Link :href="route('dashboard')">
                 <el-button type="danger"> Cancelar </el-button>
+            </Link>
+        </div>
+
+        <div class="mt-6" v-if="props.role !== 'employee'">
+            <Link :href="route('dashboard')">
+                <el-button type="danger"> Volver </el-button>
             </Link>
         </div>
         <!-- De momento sin botón de guardar -->
