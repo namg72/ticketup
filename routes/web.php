@@ -25,17 +25,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/users', [UsersController::class, 'index'])
-        ->name('users');
-});
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+
+    //users 
+
+
+    Route::get('/users', [UsersController::class, 'index'])
+        ->name('users');
+
+
+    Route::post('/users', [UsersController::class, 'store'])
+        ->name('users.store');
+
+
+
     // Tickets
+
 
 
     Route::get('/tickets/index', [TicketController::class, 'index'])
