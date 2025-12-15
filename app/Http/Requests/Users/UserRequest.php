@@ -33,8 +33,8 @@ class UserRequest extends FormRequest
     public function rules(): array
     {
         // id del usuario que estamos editando (null en create)
-        $userId = $this->route('id');
-
+        $user = $this->route('user');
+        $userIdToIgnore = $user ? $user->id : null;
         $rules = [
             'name' => ['required', 'string', 'max:255'],
 
@@ -44,12 +44,21 @@ class UserRequest extends FormRequest
                 'max:255',
                 // en create: unique normal
                 // en update: ignora el user con id = $userId
-                Rule::unique('users', 'email')->ignore($userId),
+                Rule::unique('users', 'email')->ignore($userIdToIgnore),
             ],
 
-            'supervisor_id' => ['required', 'integer', 'exists:users,id'],
+            'supervisor_id' => [
+                // Es requerido SOLO si el 'roleType' enviado es 'employee'
+                'required_if:roleType,employee',
 
+                // Permitir null si no es requerido (ej. si es supervisor)
+                'nullable',
+
+                'integer',
+                'exists:users,id'
+            ],
             'is_active' => ['sometimes', 'boolean'],
+
 
             //'role' => ['nullable', 'string', Rule::in(['admin', 'supervisor', 'employee'])],
         ];
@@ -57,11 +66,11 @@ class UserRequest extends FormRequest
         // Password:
         // - POST (create): requerida
         // - PUT/PATCH (update): opcional, si viene se valida
-        if ($this->isMethod('post')) {
+        /*   if ($this->isMethod('post')) {
             $rules['password'] = ['nullable', 'string', 'min:8'];
         } elseif ($this->isMethod('put') || $this->isMethod('patch')) {
             $rules['password'] = ['nullable', 'string', 'min:8'];
-        }
+        } */
 
         return $rules;
     }

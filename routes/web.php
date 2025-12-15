@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-
+use App\Http\Controllers\Web\Category\CategoryController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\TicketController;
 use App\Http\Controllers\Web\TicketImageController;
@@ -40,14 +40,26 @@ Route::middleware('auth')->group(function () {
         ->name('users');
 
 
-    Route::post('/users', [UsersController::class, 'store'])
+    Route::post('/users/create', [UsersController::class, 'store'])
         ->name('users.store');
+    Route::put('/users{user}', [UsersController::class, 'update'])
+        ->name('users.update');
+    Route::delete('/users{user}/destroy}', [UsersController::class, 'destroy'])
+        ->name('users.destroy');
+
+
+    //Category
+
+    Route::get('/categories', [CategoryController::class, 'index'])
+        ->name('categories');
+    Route::post('/category/create', [CategoryController::class, 'store'])
+        ->name('category.store');
+    Route::put('/category/{category}', [CategoryController::class, 'update'])
+        ->name('category.update');
 
 
 
     // Tickets
-
-
 
     Route::get('/tickets/index', [TicketController::class, 'index'])
         ->name('tickets.index');

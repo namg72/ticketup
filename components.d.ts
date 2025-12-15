@@ -20,6 +20,7 @@ declare module 'vue' {
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTable: typeof import('element-plus/es')['ElTable']
+    ElTableColum: typeof import('element-plus/es')['ElTableColum']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElUpload: typeof import('element-plus/es')['ElUpload']
   }

@@ -10,6 +10,8 @@ import { Link, useForm } from "@inertiajs/vue3";
 
 import { ref } from "vue";
 import UserFormModal from "@/Components/Users/UserFormModal.vue";
+import { User } from "@/types";
+import { ElMessage, ElMessageBox } from "element-plus";
 
 interface PaginationLink {
     url: string | null;
@@ -36,23 +38,51 @@ const props = defineProps<{
     supervisors: { id: number; name: string }[];
 }>();
 
-const form = useForm({
-    name: "Nombre de Prueba", // Datos de prueba
-    email: "test@example.com", // Datos de prueba
-    password: "password123", // Contraseña temporal de prueba
-    role_name: props.type, // Usar 'employee' o 'supervisor' según la pestaña activa
-    // Incluye cualquier otro campo que tu UserCreateRequest necesite
-});
+const form = useForm({});
 
 const showModal = ref(false);
 
-const userToEdit = ref(null);
-const handleUser = () => {
-    showModal.value = true;
-};
+const userToEdit = ref<User | null>(null);
+
 const handleCloseModal = () => {
     // 🚨 Cerrar el modal
     showModal.value = false;
+};
+const handleCreateUser = () => {
+    showModal.value = true;
+};
+const handleEditUser = (user: User) => {
+    userToEdit.value = user as User; // ⬅️ Carga el objeto del usuario a editar
+    showModal.value = true;
+};
+const handleDeleteUser = (user: User) => {
+    ElMessageBox.confirm(
+        "¿Estás seguro de que quieres eliminar a este usuario?",
+        "Advertencia",
+        {
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar",
+            type: "warning",
+        }
+    ).then(() => {
+        form.delete(
+            route("users.destroy", {
+                user: user,
+            })
+        ),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    ElMessage({
+                        type: "success",
+                        message: "Usuario eliminado correctamente",
+                    });
+                },
+                onError: () => {
+                    ElMessage.error("Error al eliminar el usuario");
+                },
+            };
+    });
 };
 </script>
 
@@ -84,7 +114,7 @@ const handleCloseModal = () => {
             </div>
         </div>
         <div class="mt-8 w-[80%] flex justify-end">
-            <el-button type="warning" @click="handleUser()">
+            <el-button type="warning" @click="handleCreateUser()">
                 {{
                     props.type === "employee"
                         ? "Crear Empleado"
@@ -144,28 +174,21 @@ const handleCloseModal = () => {
                     align="center"
                 >
                     <template #default="scope">
-                        <Link
-                            :href="route('tickets.edit', scope.row.id)"
-                            class="mr-4"
-                        >
-                            <el-button
-                                size="small"
-                                type="primary"
-                                :icon="IconEdit"
-                                circle
-                            />
-                        </Link>
-                        <Link
-                            :href="route('tickets.edit', scope.row.id)"
-                            class="mr-2"
-                        >
-                            <el-button
-                                size="small"
-                                type="danger"
-                                :icon="IconDelete"
-                                circle
-                            />
-                        </Link>
+                        <el-button
+                            size="small"
+                            type="primary"
+                            :icon="IconEdit"
+                            circle
+                            @click="handleEditUser(scope.row)"
+                        />
+
+                        <el-button
+                            size="small"
+                            type="danger"
+                            :icon="IconDelete"
+                            circle
+                            @click="handleDeleteUser(scope.row)"
+                        />
                     </template>
                 </el-table-column>
             </el-table>

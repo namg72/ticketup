@@ -48,4 +48,13 @@ class CategoryRequest extends FormRequest
 
         ];
     }
+    public function messages(): array
+    {
+        return [
+            // 1. Mensajes del campo 'name'
+            'name.required' => 'El nombre es obligatorio.',
+
+
+        ];
+    }
 }

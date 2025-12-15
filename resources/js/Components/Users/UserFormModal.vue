@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from "@inertiajs/vue3";
 import { User, UserForm } from "../../types/user";
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 
 const props = defineProps<{
@@ -24,44 +24,92 @@ const emit = defineEmits(["close"]);
 // Formulario de inertia
 
 const form = useForm({
-    id: props.user ? props.user.id : undefined,
-    name: props.user ? props.user.name : "",
-    email: props.user ? props.user.email : "",
-    roleType: props.roleType,
-    supervisor_id:
-        props.user && props.user.supervisor_id
-            ? props.user.supervisor_id
-            : null,
-    is_active: props.user ? props.user.is_active : true,
+    id: undefined as number | undefined,
+    name: "" as string,
+    email: "" as string,
+    roleType: props.roleType as string,
+    supervisor_id: null as number | null,
+    is_active: true as boolean,
 });
 
 const isEditMode = computed(() => !!props.user);
+
+// Observamos la prop 'user'. Cuando cambia de null a un objeto User,
+// reinicializamos el formulario con los datos de edición.
+watch(
+    // 1. Fuente: Observar la prop 'user'
+    () => props.user,
+
+    // 2. Handler: Dejamos que TS infiera el tipo User | null,
+    // lo cual generalmente funciona si la interfaz 'User' es correcta.
+    (newUser) => {
+        if (newUser) {
+            // Modo Edición: Cargamos los valores del usuario actual
+            form.defaults({
+                id: newUser.id,
+                name: newUser.name,
+                email: newUser.email,
+                roleType: props.roleType,
+                supervisor_id: newUser.supervisor_id,
+                is_active: !!newUser.is_active,
+            }).reset();
+        } else {
+            // Modo Creación: Usamos los defaults limpios
+            form.defaults({
+                id: undefined,
+                name: "",
+                email: "",
+                roleType: props.roleType,
+                supervisor_id: null,
+                is_active: true,
+            }).reset();
+        }
+    },
+    { immediate: true }
+);
 
 const close = () => {
     emit("close");
     form.reset();
     form.clearErrors();
 };
-
 const submit = () => {
-    if (!isEditMode.value) {
-        form.post(route("users.store"), {
-            onSuccess: () => {
-                form.reset();
-                emit("close");
-                ElMessage({
-                    type: "success",
-                    message: "Usuario creado correctamente.",
-                });
-            },
-            onError: () => {
-                ElMessage.error("Error al crear el usuario");
-            },
+    // 🚨 CORRECCIÓN 2: Lógica de Edición vs. Creación
+    const endpoint = isEditMode.value
+        ? route("users.update", form.id)
+        : route("users.store");
+
+    const method = isEditMode.value ? "put" : "post";
+
+    // Función para manejar el éxito y la notificación
+    const handleSuccess = (message: string) => {
+        // Ejecuta el cierre (que contiene el form.reset())
+        close();
+        ElMessage({
+            type: "success",
+            message: message,
         });
-    }
+    };
+
+    form.submit(method, endpoint, {
+        onSuccess: () => {
+            const successMessage = isEditMode.value
+                ? "Usuario actualizado correctamente."
+                : "Usuario creado correctamente.";
+            handleSuccess(successMessage);
+        },
+        onError: () => {
+            ElMessage.error(
+                isEditMode.value
+                    ? "Error al actualizar el usuario"
+                    : "Error al crear el usuario"
+            );
+        },
+        // Opcional: Asegurar que la contraseña no se envía si está vacía
+        preserveState: true,
+        preserveScroll: true,
+    });
 };
-if (isEditMode.value) {
-}
 </script>
 
 <template>

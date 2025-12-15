@@ -30,7 +30,7 @@ const userRole = computed(() => page.props.userRole);
                                 </Link>
                             </div>
 
-                            <!-- Navigation Links -->
+                            <!-- Navigation Links -->a
                             <div
                                 class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
                             >
@@ -46,6 +46,13 @@ const userRole = computed(() => page.props.userRole);
                                     v-if="userRole === 'admin'"
                                 >
                                     Gestión de usuarios
+                                </NavLink>
+                                <NavLink
+                                    :href="route('categories')"
+                                    :active="route().current('categories')"
+                                    v-if="userRole === 'admin'"
+                                >
+                                    Gestión de gastos
                                 </NavLink>
                             </div>
                         </div>

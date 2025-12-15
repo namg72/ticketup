@@ -73,7 +73,7 @@ class TicketController extends Controller
     public function create(Request $request)
     {
         $user = $request->user();
-        $categories = TicketCategory::all(['id', 'name']);
+        $categories = TicketCategory::where('active', true)->get(['id', 'name']);
 
 
         return Inertia::render('Tickets/Create', [
@@ -85,7 +85,7 @@ class TicketController extends Controller
 
     public function store(TicketRequest $request)
     {
-        Log::debug($request);
+
         $user = $request->user();
 
         if (!$user->hasRole('employee')) {
@@ -149,7 +149,8 @@ class TicketController extends Controller
 
         $role = $user->getRoleNames()->first();
         $ticket->load('user', 'supervisor', 'category', 'comments.user');
-        $categories = TicketCategory::all(['id', 'name']);
+        $categories = TicketCategory::where('active', true)
+            ->get(['id', 'name']);
 
         return Inertia::render('Tickets/Edit', [
             'ticket' => $ticket,

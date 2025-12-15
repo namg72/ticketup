@@ -81,6 +81,7 @@ class UsersController extends Controller
         ]);
 
         $user->assignRole($roleId);
+        //return redirect()->route('users');
 
 
         // 2: Notificar al usuario (Email de Bienvenida con Contraseña Temporal)
@@ -103,16 +104,27 @@ class UsersController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UserRequest $request, User $user)
     {
-        //
+
+        // 1. Datos base para la actualización
+        $userData = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'supervisor_id' => $request->supervisor_id,
+            'is_active' => $request->is_active, // Viene garantizado como booleano por Vue
+        ];
+
+        $user->update($userData);
+        return redirect()->route('users')
+            ->with('success', "El usuario {$user->name} ha sido actualizado correctamente.");
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(User $user)
     {
-        //
+        $user->delete($user);
     }
 }
