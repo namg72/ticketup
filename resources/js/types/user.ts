@@ -19,3 +19,9 @@ export interface UserForm {
 
 }
 
+export interface SupervisorUser {
+  id: number
+  name: string
+  
+
+}

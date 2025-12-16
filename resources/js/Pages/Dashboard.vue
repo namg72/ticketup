@@ -1,40 +1,31 @@
 <script setup lang="ts">
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { User } from "@/types";
-import { Ticket, TicketRow } from "@/types/ticket";
-import { Head, Link } from "@inertiajs/vue3";
+import {
+    MonthlyExpense,
+    StatusCounts,
+    Ticket,
+    TicketRow,
+    FiltersTickets,
+} from "@/types/ticket";
+import { Head, Link, router } from "@inertiajs/vue3"; // 💡 Importar 'router'
 import {
     Picture as IconPicture,
     Edit as IconEdit,
 } from "@element-plus/icons-vue";
 import { formatDate } from "@/Helpers/dateFormatter";
-import { ref } from "vue";
+import { ref, watch } from "vue"; // 💡 Importar 'watch'
+import MonthlyExpensesChart from "@/Components/Tickets/MonthlyExpensesChart.vue";
+import TicketsFilters from "@/Components/Tickets/TicketsFilters.vue";
+import { TicketCategory } from "@/types/ticketCategory";
+import { Paginator } from "@/types/pagination";
+import { SupervisorUser } from "@/types/user";
 
-interface StatusCounts {
-    pending: number;
-    approved: number;
-    review: number;
-    rejected: number;
-}
+// 💡 Importar el componente del gráfico
 
-interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
+// --- Interfaces de Tipos ---
 
-interface Paginator<T> {
-    current_page: number;
-    data: T[]; // El array real de tus elementos (T es Ticket en este caso)
-    last_page: number;
-    total: number;
-    per_page: number; // Añadido, ya que es clave para la paginación
-    links: PaginationLink[];
-    first_page_url: string | null;
-    last_page_url: string | null;
-    next_page_url: string | null;
-    prev_page_url: string | null;
-}
+// --- Props ---
 
 const props = defineProps<{
     example: string;
@@ -44,16 +35,65 @@ const props = defineProps<{
     user: User;
     supervisor?: User;
     statusCounts: StatusCounts;
+    // PROPS DEL GRÁFICO (Tipos corregidos)
+    monthlyExpenses: MonthlyExpense[];
+    selectedYear: number;
+    availableYears: number[];
+    categories: TicketCategory[];
+    filters: FiltersTickets;
+    supervisorList: SupervisorUser[];
 }>();
 
+// --- Estado Reactivo ---
+
+// 💡 Estado del selector, inicializado con el año cargado por el backend
+const selectedYearState = ref<number>(props.selectedYear);
 const showImageDialog = ref(false);
 const currentImageUrl = ref<string | null>(null);
 const currentDownloadUrl = ref<string | null>(null);
+
+// --- Lógica de Modales ---
 
 const openImageModal = (row: TicketRow) => {
     currentImageUrl.value = `/tickets/${row.id}/image`;
     currentDownloadUrl.value = `/tickets/${row.id}/image/download`;
     showImageDialog.value = true;
+};
+
+// --- Lógica de Interacción (Selector) ---
+
+watch(selectedYearState, (newYear) => {
+    // Solo si el año realmente ha cambiado
+    if (newYear !== props.selectedYear) {
+        // Ejecutar recarga parcial de Inertia
+        router.get(
+            route("dashboard"), // Asumiendo que esta es la ruta a TicketController@index
+            { year: newYear }, // Parámetro de búsqueda
+            {
+                // Solo pedimos las props del gráfico para optimizar
+                only: ["monthlyExpenses", "selectedYear"],
+                preserveState: true,
+                replace: true,
+            }
+        );
+    }
+});
+
+const handleFilters = (newFilters: Record<string, any>) => {
+    // Los newFilters ya vienen limpios (sin null/undefined) del componente hijo.
+
+    // Ejecutar la navegación de Inertia
+    router.get(
+        route("dashboard"), // Asumiendo que esta es la ruta a TicketController@index
+        newFilters, // Usamos los filtros como parámetros de query string
+        {
+            // Solo pedimos las props que van a cambiar (tickets y quizás el total)
+            only: ["tickets", "totalTickets", "filters"],
+            preserveState: true, // Mantiene el estado del formulario de filtros (útil si hay campos que no se recargan)
+            preserveScroll: true, // Mantiene la posición del scroll
+            replace: true, // Reemplaza la entrada actual del historial del navegador
+        }
+    );
 };
 </script>
 
@@ -68,14 +108,9 @@ const openImageModal = (row: TicketRow) => {
         </template>
 
         <div class="py-8">
-            <!-- Contenedor centrado al 80% -->
             <div class="w-4/5 mx-auto space-y-6">
-                <!-- FILA 1: 2 CARDS (usuario / gráfico) -->
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <!-- Card izquierda: usuario + total tickets -->
                     <div class="bg-white rounded-lg shadow-sm p-6">
-                        <!-- Luego meteremos props.userName y props.totalTickets -->
-
                         <div
                             class="flex flex-col gap-4 sm:flex-row sm:justify-between"
                         >
@@ -105,20 +140,34 @@ const openImageModal = (row: TicketRow) => {
                         </p>
                     </div>
 
-                    <!-- Card derecha: gráfico (de momento vacía) -->
                     <div class="bg-white rounded-lg shadow-sm p-6">
-                        <p class="text-sm text-gray-500 mb-2">
-                            Gráfico por meses
-                        </p>
-                        <div
-                            class="flex items-center justify-center h-40 text-gray-400 text-sm border border-dashed border-gray-200 rounded-lg"
-                        >
-                            Aquí irá el gráfico
+                        <div class="flex justify-between items-center mb-4">
+                            <p class="text-lg font-semibold text-gray-900">
+                                Gastos Totales Mensuales
+                            </p>
+                            <el-select
+                                v-model="selectedYearState"
+                                placeholder="Seleccionar Año"
+                                style="width: 140px"
+                                size="small"
+                            >
+                                <el-option
+                                    v-for="year in props.availableYears"
+                                    :key="year"
+                                    :label="year"
+                                    :value="year"
+                                />
+                            </el-select>
+                        </div>
+
+                        <div style="height: 400px; width: 100%" m>
+                            <MonthlyExpensesChart
+                                :monthly-data="props.monthlyExpenses"
+                            />
                         </div>
                     </div>
                 </div>
 
-                <!-- FILA 2: 4 CARDS DE ESTADO -->
                 <div
                     class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
                 >
@@ -157,7 +206,19 @@ const openImageModal = (row: TicketRow) => {
                     </div>
                 </div>
 
-                <!-- FILA 3: TABLA DE TICKETS -->
+                <!-- Filtors busqueda -->
+                <div class="mt-16">
+                    <TicketsFilters
+                        :categories="props.categories"
+                        :filters="props.filters"
+                        :supervisor="props.supervisor!"
+                        :supervisorList="props.supervisorList"
+                        :role="props.role"
+                        @filtersChanged="handleFilters"
+                    />
+                </div>
+                <!-- Tabla tickets -->
+
                 <div class="bg-white rounded-lg shadow-sm p-6">
                     <div class="flex justify-between items-center mb-6">
                         <p class="text-lg font-semibold text-gray-900">
@@ -174,7 +235,6 @@ const openImageModal = (row: TicketRow) => {
                         </Link>
                     </div>
 
-                    <!-- Aquí luego metemos la tabla real -->
                     <div class="mt-4 overflow-x-auto">
                         <el-table
                             :data="tickets.data"
@@ -213,7 +273,7 @@ const openImageModal = (row: TicketRow) => {
                                 label="Concepto"
                                 show-overflow-tooltip
                             />
-                            <el-table-column label="Tipo de gasto" width="150">
+                            <el-table-column label="Categoria" width="150">
                                 <template #default="scope">
                                     <span>{{
                                         scope.row.category?.name || "N/A"
@@ -230,10 +290,10 @@ const openImageModal = (row: TicketRow) => {
                                 <template #default="scope">
                                     <span>
                                         {{
-                                            scope.row.total_amount // Paso 2: Verificar si existe y convertir a float
+                                            scope.row.total_amount
                                                 ? `${parseFloat(
                                                       scope.row.total_amount
-                                                  ).toFixed(2)}€` // Paso 3: Si no existe, mostrar N/A
+                                                  ).toFixed(2)}€`
                                                 : "N/A"
                                         }}
                                     </span>
@@ -256,7 +316,6 @@ const openImageModal = (row: TicketRow) => {
                                             'bg-gray-400': !scope.row.status,
                                         }"
                                     >
-                                        <!-- Texto bonito del estado -->
                                         <span
                                             v-if="
                                                 scope.row.status === 'approved'

@@ -39,3 +39,24 @@ export interface  TicketRow  {
   id: number
   uri?: string | null
 }
+
+export interface MonthlyExpense {
+    month: string;
+    total: number;
+}
+
+export interface StatusCounts {
+    pending: number;
+    approved: number;
+    review: number;
+    rejected: number;
+}
+
+export  interface FiltersTickets {
+    from?: string | null;
+    to?: string | null;
+    status?: string | null;
+    supervisor_id?: number | null;
+    user_name?: string | null;
+    category_id?: number | null;
+}

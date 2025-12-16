@@ -159,7 +159,21 @@ const userRole = computed(() => page.props.userRole);
                             :href="route('dashboard')"
                             :active="route().current('dashboard')"
                         >
-                            Dashboard
+                            Panel
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('users')"
+                            :active="route().current('users')"
+                            v-if="userRole === 'admin'"
+                        >
+                            Gestión de usuarios
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('categories')"
+                            :active="route().current('categories')"
+                            v-if="userRole === 'admin'"
+                        >
+                            Gestión de gastos
                         </ResponsiveNavLink>
                     </div>
 
