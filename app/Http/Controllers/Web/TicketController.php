@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ticket\CommentRequest;
 use App\Http\Requests\TicketRequest;
+use App\Mail\CommentTicketUpdate;
+use App\Mail\TicketStatusUpdated;
 use App\Models\Ticket;
 use App\Models\TicketCategory;
 use App\Models\TicketComment;
@@ -14,7 +16,8 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class TicketController extends Controller
 {
@@ -328,6 +331,8 @@ class TicketController extends Controller
 
     public function updateComment(Ticket $ticket, TicketComment $comment, CommentRequest $request)
     {
+
+        $user = $request->user();
         $this->authorize('editComment', [$ticket, $comment]);
 
         $data = $request->validated(); // ['message' => '...']
@@ -336,6 +341,11 @@ class TicketController extends Controller
             'message' => $data['message'],
         ]);
 
+        if ($ticket->user && $ticket->user->is_active) {
+            if ($comment->user_id !== $user->id)
+
+                Mail::to($ticket->user->email)->send(new CommentTicketUpdate($ticket));
+        }
         return redirect()
             ->route('tickets.edit', $ticket)
             ->with('success', 'Comentario acutalizado correctamente.');
@@ -353,12 +363,15 @@ class TicketController extends Controller
 
     public function changeStatus(Ticket $ticket, Request $request)
     {
-        // 1. Validar la entrada (El número de estado sigue viniendo en el Request Body)
+        // 1. Guardamos el estado actual para comparar después
+        $originalStatus = $ticket->status;
+
+        // 2. Validar la entrada (El número de estado sigue viniendo en el Request Body)
         $validated = $request->validate([
             'status' => 'required|integer|between:1,4',
         ]);
 
-        // 2. Mapeo de estados (La lógica de BD no cambia)
+        // 3. Mapeo de estados (La lógica de BD no cambia)
         $statusMap = [
             1 => 'pending',
             2 => 'review',
@@ -377,6 +390,17 @@ class TicketController extends Controller
             $ticket->save();
         }
 
+        //4 // 4. Lógica de envío de Email
+        // Solo enviamos si el estado cambió REALMENTE
+
+
+        if ($originalStatus !== $ticket->status) {
+            if ($ticket->user && $ticket->user->is_active) {
+                /*   dd("El código ha llegado hasta aquí, el email debería enviarse"); */
+
+                Mail::to($ticket->user->email)->send(new TicketStatusUpdated($ticket));
+            }
+        }
 
         // Redireccionamos t.
 

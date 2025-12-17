@@ -7,6 +7,7 @@ import { TicketCategory } from "@/types/ticketCategory";
 import { SupervisorUser } from "@/types/user";
 import { type UploadFile } from "element-plus";
 import ApplicationLogo from "../../../../vendor/laravel/breeze/stubs/inertia-react-ts/resources/js/Components/ApplicationLogo";
+import { rectCoordAxisBuildSplitArea } from "echarts/types/src/component/axis/axisSplitHelper.js";
 
 const props = withDefaults(
     defineProps<{
@@ -76,6 +77,13 @@ const resetFilters = () => {
     form.supervisor_id = null;
     form.user_name = null;
     form.category_id = null;
+};
+
+const statusTranslaton: Record<string, string> = {
+    pending: "Pendiente",
+    review: "En revisión",
+    approved: "Aprobado",
+    rejected: "Rechazado",
 };
 </script>
 
@@ -168,8 +176,9 @@ const resetFilters = () => {
                                 <el-option
                                     v-for="st in statusName"
                                     :key="st"
-                                    :label="st"
+                                    :label="statusTranslaton[st] || st"
                                     :value="st"
+                                    s
                                 />
                             </el-select>
                         </el-form-item>
