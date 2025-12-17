@@ -26,6 +26,7 @@ const props = defineProps<{
         updated_at: string;
         uri: string;
         status: string | number;
+        finalized_by_admin: boolean;
     };
     categories: {
         id: number;
@@ -46,6 +47,8 @@ const props = defineProps<{
     };
 }>();
 
+console.log(props.ticket.finalized_by_admin);
+
 const form = useForm({
     id: props.ticket.id,
     title: props.ticket.title ?? "",
@@ -54,6 +57,7 @@ const form = useForm({
     supervisor: props.ticket.supervisor?.name,
     total_amount: props.ticket.total_amount ?? "",
     status: props.ticket.status,
+    finalized_by_admin: props.ticket.finalized_by_admin ?? null,
 });
 const showCommentModal = ref(false);
 const modalMode = ref<"create" | "update">("create");
@@ -133,6 +137,12 @@ const isCommentAvailable = () => {
     }
 };
 const handleStatus = (newStatus: number) => {
+    if (props.role === "admin" && (newStatus === 3 || newStatus === 4)) {
+        form.finalized_by_admin = true;
+    } else if (props.role === "admin" && newStatus === 2) {
+        form.finalized_by_admin = false;
+    }
+
     form.status = newStatus;
     form.put(route("tickets.change.status", props.ticket.id), {
         preserveScroll: true,
@@ -149,6 +159,14 @@ const handleStatus = (newStatus: number) => {
         },
     });
 };
+
+const statusDisabled = () => {
+    if (props.role !== "admin" && props.ticket.finalized_by_admin === true) {
+        return true;
+    } else {
+        return false;
+    }
+};
 </script>
 
 <template>
@@ -164,13 +182,25 @@ const handleStatus = (newStatus: number) => {
                         v-if="props.role !== 'employee'"
                     >
                         <div>
-                            <el-button type="warning" @click="handleStatus(2)">
+                            <el-button
+                                type="warning"
+                                :disabled="statusDisabled()"
+                                @click="handleStatus(2)"
+                            >
                                 Revisar ticket
                             </el-button>
-                            <el-button type="success" @click="handleStatus(3)">
+                            <el-button
+                                type="success"
+                                :disabled="statusDisabled()"
+                                @click="handleStatus(3)"
+                            >
                                 Aprobar ticket
                             </el-button>
-                            <el-button type="danger" @click="handleStatus(4)">
+                            <el-button
+                                type="danger"
+                                :disabled="statusDisabled()"
+                                @click="handleStatus(4)"
+                            >
                                 Rechazar ticket
                             </el-button>
                         </div>

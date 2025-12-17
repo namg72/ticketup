@@ -228,6 +228,7 @@ class TicketController extends Controller
             'role' => $role,
             'comments' => $ticket->comments,
             'user' => $user,
+
         ]);
     }
 
@@ -285,6 +286,7 @@ class TicketController extends Controller
                 'total_amount' => $total,
                 'amount' => $base,
                 'iva_amount' => $iva,
+
             ]);
 
             $ticket->save();
@@ -368,6 +370,10 @@ class TicketController extends Controller
 
         if (isset($statusMap[$newStatus])) {
             $ticket->status = $statusMap[$newStatus];
+            if ($request->user()->hasRole('admin')) {
+
+                $ticket->finalized_by_admin = $request->finalized_by_admin;
+            }
             $ticket->save();
         }
 

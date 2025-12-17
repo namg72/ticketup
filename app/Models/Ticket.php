@@ -18,7 +18,8 @@ class Ticket extends Model
         'category_id',
         'amount',
         'iva_amount',
-        'total_amount'
+        'total_amount',
+        'finalized_by_admin'
 
     ];
 
@@ -31,6 +32,7 @@ class Ticket extends Model
         'amount'              => 'decimal:2',
         'iva_amount'          => 'decimal:2',
         'total_amount'        => 'decimal:2',
+        'finalized_by_admin'  => 'boolean'
     ];
 
     public function user()
